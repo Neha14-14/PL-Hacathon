@@ -1,0 +1,47 @@
+=============================================
+AWR SNAPSHOT SUMMARY (Simulated for Demo)
+=============================================
+Snapshot ID: 1
+Begin time: 23-FEB-25 10:00:00
+End time:   23-FEB-25 11:00:00
+
+---------------------------------------------
+LOAD PROFILE
+---------------------------------------------
+DB Time(s):           3,450
+DB CPU(s):            2,100
+Redo size:           125,000 bytes
+Logical reads:       2,500,000
+Parses:               45,000
+Hard parses:          120
+
+---------------------------------------------
+TOP 5 WAIT EVENTS BY TIME
+---------------------------------------------
+Event                          Waits    Time(s)   Avg(ms)
+db file sequential read        85,000   1,200     14.1
+CPU time                        -       1,100     -
+enq: TX - row lock contention  2,500     450      180.0
+log file sync                   1,200     320      266.7
+direct path read temp           800      280      350.0
+
+---------------------------------------------
+TOP SQL BY ELAPSED TIME (PLAN HASH)
+---------------------------------------------
+SQL_ID        Elapsed(s)  Executions  Elapsed per Exec
+------------- ----------  ----------  ----------------
+abc123xyz     1,250       1           1,250.00
+def456uvw      890       2             445.00
+ghi789rst      340       15             22.67
+
+SQL_ID abc123xyz:
+  SELECT /*+ FULL(t) */ SUM(amount), merchant_id
+  FROM transactions t
+  GROUP BY merchant_id;
+
+---------------------------------------------
+PARAMETER (Sample)
+---------------------------------------------
+optimizer_mode                 = ALL_ROWS
+cursor_sharing                  = EXACT
+db_file_multiblock_read_count  = 128

@@ -1,0 +1,8 @@
+{
+  "project_root": ".",
+  "awr_simulated_dir": "awr_simulated",
+  "awr_sample_file": "awr_simulated/awr_sample.txt",
+  "code_repo_dir": "db_scripts",
+  "alerts_dir": "alerts",
+  "sns_topic_arn": "arn:aws:sns:ap-south-1:115503923343:creditplus-anamoly-alerts"
+}

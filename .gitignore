@@ -1,0 +1,25 @@
+# AWS credentials (NEVER commit)
+config/aws_credentials.env
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Alerts output
+alerts/*.txt
+
+# SQLcl (downloaded binary)
+sqlcl/
+sqlcl-latest.zip

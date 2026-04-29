@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resilient Credit+ Guardian</title>
+<style>
+:root{--bg:#f5f6fa;--card:#fff;--border:#e2e5ec;--primary:#2563eb;--danger:#dc2626;--success:#16a34a;--warn:#ea580c;--muted:#64748b;--text:#1e293b;--radius:10px;--shadow:0 1px 3px rgba(0,0,0,.06)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;font-size:14px}
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+nav .logo{font-weight:700;font-size:16px;letter-spacing:-.3px}
+nav .logo span{color:var(--primary)}
+nav .links{display:flex;gap:20px}
+nav .links a{text-decoration:none;color:var(--muted);font-weight:500;font-size:13px;transition:.2s}
+nav .links a:hover,nav .links a.active{color:var(--primary)}
+
+.container{max-width:1200px;margin:0 auto;padding:20px 24px}
+
+.top-bar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.top-bar h1{font-size:20px;font-weight:600;flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;background:#fff;color:var(--text);transition:.15s}
+.btn:hover{background:var(--bg)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:#1d4ed8}
+.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn-danger:hover{background:#b91c1c}
+
+.tabs{display:flex;gap:0;margin-bottom:16px;border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content}
+.tab{padding:8px 20px;font-size:13px;font-weight:500;cursor:pointer;background:#fff;border:none;color:var(--muted);transition:.15s}
+.tab:not(:last-child){border-right:1px solid var(--border)}
+.tab.active{background:var(--primary);color:#fff}
+
+.status-pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.status-RUNNING{background:#dbeafe;color:#1d4ed8}
+.status-COMPLETED{background:#dcfce7;color:#15803d}
+.status-FAILED{background:#fef2f2;color:#dc2626}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid var(--border)}
+tr:hover td{background:#f8fafc}
+
+.empty{text-align:center;color:var(--muted);padding:30px;font-size:13px}
+
+.monitor-status{display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.on{background:var(--success);box-shadow:0 0 6px rgba(22,163,74,.5)}
+.dot.off{background:var(--muted)}
+
+.loading-bar{height:2px;background:var(--primary);animation:loading 1.2s infinite ease-in-out;border-radius:2px;margin-bottom:8px}
+@keyframes loading{0%{width:0}50%{width:100%}100%{width:0}}
+
+.fail-btn{padding:2px 8px;font-size:11px;border:1px solid var(--danger);color:var(--danger);background:none;border-radius:4px;cursor:pointer}
+.fail-btn:hover{background:var(--danger);color:#fff}
+
+/* Job group: one card per job with alerts left + RCA right */
+.job-group{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow)}
+.job-group-header{font-size:14px;font-weight:700;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);color:var(--text)}
+.job-group-body{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:800px){.job-group-body{grid-template-columns:1fr}}
+.job-group-body h4{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+
+.alert-chip{margin-bottom:8px;padding:8px 12px;border-radius:6px;font-size:12px;cursor:pointer;user-select:none;transition:.15s}
+.alert-chip:hover{filter:brightness(.97)}
+.alert-chip.immediate{background:#fffbeb;border:1px solid #fde68a}
+.alert-chip.rca-type{background:#eff6ff;border:1px solid #bfdbfe}
+.alert-chip .atype{font-weight:600;text-transform:capitalize}
+.alert-chip .atime{color:var(--muted);font-size:11px;margin-left:8px}
+.alert-chip .arrow{float:right;font-size:10px;color:var(--muted);transition:transform .2s}
+.alert-chip.open .arrow{transform:rotate(90deg)}
+.alert-chip-body{display:none;margin-top:6px;padding:10px;background:#f8fafc;border-radius:6px;font-size:12px;white-space:pre-wrap;word-break:break-word;max-height:250px;overflow-y:auto;line-height:1.6}
+.alert-chip.open .alert-chip-body{display:block}
+
+.rca-block{cursor:pointer;user-select:none}
+.rca-block .rca-header{font-size:12px;font-weight:600;color:var(--primary);padding:6px 0;display:flex;align-items:center;gap:6px}
+.rca-block .arrow{font-size:10px;color:var(--muted);transition:transform .2s}
+.rca-block.open .arrow{transform:rotate(90deg)}
+.rca-block pre{display:none;background:#f8fafc;padding:12px;border-radius:6px;font-size:12px;white-space:pre-wrap;word-break:break-word;max-height:300px;overflow-y:auto;line-height:1.6}
+.rca-block.open pre{display:block}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">Resilient <span>Credit+</span> Guardian</div>
+  <div class="links">
+    <a href="/" class="active">Dashboard</a>
+    <a href="/run">Run Jobs</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="top-bar">
+    <h1>Monitoring Dashboard</h1>
+    <div class="monitor-status"><span id="dot" class="dot off"></span><span id="monLabel" style="font-size:12px;color:var(--muted)">Idle</span></div>
+    <button class="btn btn-primary" id="startBtn" onclick="startMonitor()">Start Monitor</button>
+    <button class="btn btn-danger" id="stopBtn" onclick="stopMonitor()" style="display:none">Stop</button>
+    <button class="btn" onclick="refresh()">Refresh</button>
+  </div>
+
+  <div id="rcaLoading" style="display:none"><div class="loading-bar"></div><span style="font-size:12px;color:var(--primary)">AI is analysing...</span></div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('batch')">Batch Log</button>
+    <button class="tab" onclick="switchTab('report')">Report Log</button>
+  </div>
+
+  <div id="batchSection">
+    <div class="card">
+      <table><thead><tr>
+        <th>Job ID</th><th>Name</th><th>Status</th><th>Start</th><th>End</th><th>Avg (s)</th><th>Expected (avg+10%)</th><th>Duration (s)</th><th>Error</th><th></th>
+      </tr></thead><tbody id="batchBody"></tbody></table>
+      <div id="batchEmpty" class="empty">No batch entries yet. Run a job from the Run Jobs page.</div>
+    </div>
+    <div id="batchJobGroups"><div class="empty">No alerts or RCA for batches yet.</div></div>
+  </div>
+
+  <div id="reportSection" style="display:none">
+    <div class="card">
+      <table><thead><tr>
+        <th>Job ID</th><th>Name</th><th>Status</th><th>Start</th><th>End</th><th>Avg (s)</th><th>Expected (avg+10%)</th><th>Duration (s)</th><th>Error</th><th></th>
+      </tr></thead><tbody id="reportBody"></tbody></table>
+      <div id="reportEmpty" class="empty">No report entries yet. Run a job from the Run Jobs page.</div>
+    </div>
+    <div id="reportJobGroups"><div class="empty">No alerts or RCA for reports yet.</div></div>
+  </div>
+</div>
+
+<script>
+let currentTab='batch';
+let _prevBatchHtml='', _prevReportHtml='';
+
+function switchTab(t){
+  currentTab=t;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('batchSection').style.display=t==='batch'?'':'none';
+  document.getElementById('reportSection').style.display=t==='report'?'':'none';
+}
+
+function fmt(ts){
+  if(!ts)return '—';
+  const d=new Date(ts);
+  return d.toLocaleTimeString('en-IN',{hour12:false})+'.'+String(d.getMilliseconds()).padStart(3,'0');
+}
+
+function statusPill(s){return `<span class="status-pill status-${s}">${s}</span>`}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function g(r){
+  return {
+    id:   r.ID   ?? r.id   ?? '—',
+    name: r.NAME ?? r.name ?? '—',
+    st:   r.STATUS ?? r.status ?? '—',
+    s:    r.START_TIME ?? r.start_time ?? null,
+    e:    r.END_TIME ?? r.end_time ?? null,
+    avg:  r.AVG_SECS ?? r.avg_secs ?? r.AVG_MINS ?? r.avg_mins ?? '—',
+    exp:  r.EXPECTED_SECS ?? r.expected_secs ?? r.EXPECTED_MINS ?? r.expected_mins ?? '—',
+    dur:  r.DURATION_SECS ?? r.duration_secs ?? null,
+    err:  r.ERROR_MESSAGE ?? r.error_message ?? ''
+  };
+}
+
+function renderTable(bodyId,emptyId,rows,type){
+  const body=document.getElementById(bodyId);
+  const empty=document.getElementById(emptyId);
+  if(!rows||!rows.length){body.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  body.innerHTML=rows.map(r=>{const d=g(r);
+    const durationCell = d.dur != null ? d.dur : '—';
+    return `<tr>
+    <td><strong>${d.id}</strong></td>
+    <td>${d.name}</td>
+    <td>${statusPill(d.st)}</td>
+    <td>${fmt(d.s)}</td>
+    <td>${fmt(d.e)}</td>
+    <td>${d.avg}</td>
+    <td>${d.exp}</td>
+    <td>${durationCell}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.err.replace(/"/g,'&quot;')}">${d.err||'—'}</td>
+    <td>${d.st==='RUNNING'?`<button class="fail-btn" onclick="failJob('${type}',${d.id})">Fail</button>`:''}</td>
+  </tr>`;}).join('');
+}
+
+function toggleEl(el){
+  el.classList.toggle('open');
+}
+
+function buildJobGroups(alerts, rcas){
+  const jobMap = {};
+  alerts.forEach(a=>{
+    const jid = a.id||'?';
+    if(!jobMap[jid]) jobMap[jid]={alerts:[], rca:null, name: a.anomaly_name||''};
+    jobMap[jid].alerts.push(a);
+    if(!jobMap[jid].name) jobMap[jid].name = a.anomaly_name||'';
+  });
+  rcas.forEach(r=>{
+    const jid = r.id||'?';
+    if(!jobMap[jid]) jobMap[jid]={alerts:[], rca:null, name: r.name||''};
+    jobMap[jid].rca = r.rca_text||'';
+    if(!jobMap[jid].name) jobMap[jid].name = r.name||'';
+  });
+
+  const jobIds = Object.keys(jobMap).sort((a,b)=>Number(b)-Number(a));
+  if(!jobIds.length) return '<div class="empty">No alerts or RCA yet.</div>';
+
+  return jobIds.map(jid=>{
+    const j = jobMap[jid];
+    const alertsHtml = j.alerts.length
+      ? j.alerts.map(a=>{
+          const isRca = a.type==='rca';
+          const label = isRca ? 'RCA Alert' : 'Immediate Alert';
+          const cls = isRca ? 'rca-type' : 'immediate';
+          const bodyContent = a.body ? escHtml(a.body) : (a.subject ? escHtml(a.subject) : 'No details available.');
+          return `<div class="alert-chip ${cls}" onclick="toggleEl(this)">
+            <span class="atype">${label}</span><span class="atime">${a.timestamp||''}</span><span class="arrow">&#9654;</span>
+            <div class="alert-chip-body">${bodyContent}</div>
+          </div>`;
+        }).join('')
+      : '<span style="font-size:12px;color:var(--muted)">Pending...</span>';
+
+    const rcaHtml = j.rca
+      ? `<div class="rca-block" onclick="toggleEl(this)">
+          <div class="rca-header"><span class="arrow">&#9654;</span> View Root Cause Analysis</div>
+          <pre>${escHtml(j.rca)}</pre>
+        </div>`
+      : '<span style="font-size:12px;color:var(--muted)">Pending...</span>';
+
+    return `<div class="job-group">
+      <div class="job-group-header">Job #${jid} — ${escHtml(j.name)}</div>
+      <div class="job-group-body">
+        <div><h4>Alerts</h4>${alertsHtml}</div>
+        <div><h4>Root Cause Analysis</h4>${rcaHtml}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function refresh(){
+  try{
+    const [bl,rl,st]=await Promise.all([
+      fetch('/api/batchlog').then(r=>r.json()),
+      fetch('/api/reportlog').then(r=>r.json()),
+      fetch('/api/status').then(r=>r.json()),
+    ]);
+    renderTable('batchBody','batchEmpty',Array.isArray(bl)?bl:[],'batch');
+    renderTable('reportBody','reportEmpty',Array.isArray(rl)?rl:[],'report');
+
+    const isActive=st.monitoring_active;
+    document.getElementById('dot').className='dot '+(isActive?'on':'off');
+    document.getElementById('monLabel').textContent=isActive?'Monitoring':'Idle';
+    document.getElementById('startBtn').style.display=isActive?'none':'';
+    document.getElementById('stopBtn').style.display=isActive?'':'none';
+    document.getElementById('rcaLoading').style.display=st.rca_loading?'':'none';
+
+    const bAlerts=[],rAlerts=[],bRca=[],rRca=[];
+    (st.alert_history||[]).forEach(a=>{
+      if(a.source==='BatchLog')bAlerts.push(a);
+      else if(a.source==='ReportLog')rAlerts.push(a);
+      else bAlerts.push(a);
+    });
+    (st.rca_history||[]).forEach(r=>{
+      const src=r.source||(r.anomaly||{}).source||'';
+      const item={id:r.id||(r.anomaly||{}).id,name:r.name||(r.anomaly||{}).name,rca_text:r.rca_text};
+      if(src==='BatchLog')bRca.push(item);
+      else if(src==='ReportLog')rRca.push(item);
+      else bRca.push(item);
+    });
+
+    // Only update DOM when content actually changes (prevents scroll jump)
+    const newBatchHtml = buildJobGroups(bAlerts, bRca);
+    if(newBatchHtml !== _prevBatchHtml){
+      document.getElementById('batchJobGroups').innerHTML = newBatchHtml;
+      _prevBatchHtml = newBatchHtml;
+    }
+    const newReportHtml = buildJobGroups(rAlerts, rRca);
+    if(newReportHtml !== _prevReportHtml){
+      document.getElementById('reportJobGroups').innerHTML = newReportHtml;
+      _prevReportHtml = newReportHtml;
+    }
+  }catch(e){console.error(e)}
+}
+
+async function startMonitor(){
+  await fetch('/api/start-monitor',{method:'POST'});
+  refresh();
+}
+async function stopMonitor(){
+  await fetch('/api/stop-monitor',{method:'POST'});
+  setTimeout(refresh,1500);
+}
+async function failJob(type,id){
+  if(!confirm(`Fail ${type} job #${id}?`))return;
+  await fetch('/api/fail-job',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,id})});
+  refresh();
+}
+
+refresh();
+setInterval(refresh,4000);
+</script>
+</body>
+</html>
